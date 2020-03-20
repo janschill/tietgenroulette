@@ -9,6 +9,7 @@
       name="description"
       content="Web site created using create-react-app"
     />
+    <script src="https://cdn.jsdelivr.net/npm/peerjs@0.3.20/dist/peer.min.js"></script>
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
     <!--
       manifest.json provides metadata used when your web app is installed on a
@@ -27,17 +28,125 @@
     <title>React App</title>
   </head>
   <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <style>
+      .video {
+        height: 300px;
+        width: 300px;
+        border: 1px solid black;
+      }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/peerjs@0.3.20/dist/peer.min.js"></script>
+
     <div id="root"></div>
-    <!--
-      This HTML file is a template.
-      If you open it directly in the browser, you will see an empty page.
+    <div id="peer-id"></div>
+    <div id="active-users"></div>
 
-      You can add webfonts, meta tags, or analytics to this file.
-      The build step will place the bundled scripts into the <body> tag.
+    <div id="choose-peer">
+      <input id="peer-chooser" type="text" placeholder="Peer id" />
+      <button onclick="callPeer()">Call peer</button>
 
-      To begin the development, run `npm start` or `yarn start`.
-      To create a production bundle, use `npm run build` or `yarn build`.
-    -->
+      <video class="video video--me" autoplay></video>
+      <video class="video video--match" autoplay></video>
+    </div>
+    <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
+    <script src="https://www.gstatic.com/firebasejs/7.12.0/firebase-app.js"></script>
+
+    <!-- Add Firebase products that you want to use -->
+    <script src="https://www.gstatic.com/firebasejs/7.12.0/firebase-firestore.js"></script>
+
+    <script>
+      // Your web app's Firebase configuration
+      var firebaseConfig = {
+        apiKey: 'AIzaSyA5QAe5vJwNNZ6FvmgSJUo4hyYzxOB0ll8',
+        authDomain: 'tietgenroulette.firebaseapp.com',
+        databaseURL: 'https://tietgenroulette.firebaseio.com',
+        projectId: 'tietgenroulette',
+        storageBucket: 'tietgenroulette.appspot.com',
+        messagingSenderId: '494070460743',
+        appId: '1:494070460743:web:7deb5e0557690b0d321c62'
+      };
+      // Initialize Firebase
+      firebase.initializeApp(firebaseConfig);
+    </script>
+
+    <script>
+      var mediaStream = null;
+      openMediaStream();
+      var peer = new Peer({ key: 'lwjd5qra8257b9' });
+
+      firebase
+        .firestore()
+        .collection('activeUsers')
+        .onSnapshot(snapshot => {
+          let activeUsers = snapshot.docs.map(activeUser => activeUser.id);
+          console.log(activeUsers);
+          document.getElementById('active-users').innerHTML = activeUsers.join(
+            ', '
+          );
+        });
+
+      peer.on('open', function(id) {
+        console.log('My peer ID is: ' + id);
+        firebase
+          .firestore()
+          .collection('activeUsers')
+          .doc(id)
+          .set({
+            activated: new Date()
+          });
+
+        document.querySelector(
+          '#peer-id'
+        ).innerHTML = `Your peer id is: ${String(id)}`;
+      });
+
+      peer.on('connection', function(conn) {
+        console.log('Someone is reaching out');
+      });
+
+      peer.on('call', call => {
+        call.answer(mediaStream);
+
+        call.on('stream', stream => {
+          const video = document.querySelector('.video--match');
+          video.srcObject = stream;
+        });
+      });
+
+      function connectToPeer() {
+        var peerChoice = document.getElementById('peer-chooser').value;
+        console.log(peerChoice);
+        conn = peer.connect(peerChoice);
+      }
+
+      function callPeer() {
+        var peerChoice = document.getElementById('peer-chooser').value;
+
+        const mediaConnection = peer.call(peerChoice, mediaStream);
+        mediaConnection.on('stream', stream => {
+          const video = document.querySelector('.video--match');
+          video.srcObject = stream;
+        });
+      }
+
+      function openMediaStream() {
+        function hasGetUserMedia() {
+          return !!(
+            navigator.mediaDevices && navigator.mediaDevices.getUserMedia
+          );
+        }
+        if (hasGetUserMedia()) {
+          const constraints = {
+            video: true,
+            audio: true
+          };
+          const video = document.querySelector('.video--me');
+          navigator.mediaDevices.getUserMedia(constraints).then(stream => {
+            mediaStream = stream;
+            video.srcObject = stream;
+          });
+        }
+      }
+    </script>
   </body>
 </html>
