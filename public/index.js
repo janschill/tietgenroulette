@@ -17,7 +17,7 @@ var isOnlineForDatabase = {
 firebase
   .database()
   .ref('.info/connected')
-  .on('value', function(snapshot) {
+  .on('value', function (snapshot) {
     // If we're not currently connected, don't do anything.
     if (snapshot.val() == false) {
       console.log('Not currently connected');
@@ -31,7 +31,7 @@ firebase
     userStatusDatabaseRef
       .onDisconnect()
       .set(isOfflineForDatabase)
-      .then(function() {
+      .then(function () {
         // The promise returned from .onDisconnect().set() will
         // resolve as soon as the server acknowledges the onDisconnect()
         // request, NOT once we've actually disconnected:
@@ -52,7 +52,7 @@ firebase
     document.getElementById('active-users').innerHTML = activeUsers.join(', ');
   });
 
-peer.on('open', function(id) {
+peer.on('open', function (id) {
   console.log('My peer ID is: ' + id);
   firebase
     .firestore()
@@ -67,7 +67,7 @@ peer.on('open', function(id) {
   )}`;
 });
 
-peer.on('connection', function(conn) {
+peer.on('connection', function (conn) {
   console.log('Someone is reaching out');
 });
 
@@ -110,4 +110,7 @@ function openMediaStream() {
       video.srcObject = stream;
     });
   }
+}
+function findNext() {
+  console.log('find next user');
 }

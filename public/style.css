@@ -1,6 +1,11 @@
 html {
   font-size: 16px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: Georgia, 'Times New Roman', Times, serif;
+  padding: 0 5px 20px;
+}
+
+.main {
+  text-align: center;
 }
 
 .header {
@@ -12,8 +17,13 @@ html {
   font-size: 2rem;
 }
 
+.logo {
+  height: 150px;
+}
+
 .videos {
   text-align: center;
+  margin-bottom: 20px;
 }
 
 .video {
@@ -36,4 +46,8 @@ html {
     width: 49%;
     margin: 0;
   }
+}
+
+.button {
+  padding: 15px;
 }
