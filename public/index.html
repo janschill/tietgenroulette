@@ -1,42 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
-    <meta
-      name="description"
-      content="Web site created using create-react-app"
-    />
-    <script src="https://cdn.jsdelivr.net/npm/peerjs@0.3.20/dist/peer.min.js"></script>
-    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
-    <!--
-      manifest.json provides metadata used when your web app is installed on a
-      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
-    -->
-    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-    <!--
-      Notice the use of %PUBLIC_URL% in the tags above.
-      It will be replaced with the URL of the `public` folder during the build.
-      Only files inside the `public` folder can be referenced from the HTML.
 
-      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
-      work correctly both with client-side routing and a non-root public URL.
-      Learn how to configure a non-root public URL by running `npm run build`.
-    -->
-    <title>React App</title>
-  </head>
-  <body>
-    <style>
-      .video {
-        height: 300px;
-        width: 300px;
-        border: 1px solid black;
-      }
-    </style>
-    <script src="https://cdn.jsdelivr.net/npm/peerjs@0.3.20/dist/peer.min.js"></script>
+<head>
+  <meta charset="utf-8" />
+  <link rel="icon" href="favicon.ico" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#000000" />
+  <meta name="description" content="Web site created using create-react-app" />
+  <script src="https://cdn.jsdelivr.net/npm/peerjs@0.3.20/dist/peer.min.js"></script>
+  <link rel="apple-touch-icon" href="/logo192.png" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="reset.css">
+  <link rel="stylesheet" href="style.css">
+  <title>Tietgenroulette</title>
+</head>
 
+<body>
+  <header class="header">
+    <h1 class="title">Tietgenroulette</h1>
+  </header>
+  <main class="main">
     <div id="root"></div>
     <div id="peer-id"></div>
     <div id="active-users"></div>
@@ -45,108 +28,28 @@
       <input id="peer-chooser" type="text" placeholder="Peer id" />
       <button onclick="callPeer()">Call peer</button>
 
-      <video class="video video--me" autoplay></video>
-      <video class="video video--match" autoplay></video>
+      <div class="videos">
+        <video class="video video--match" autoplay></video>
+        <video class="video video--me" autoplay></video>
+      </div>
     </div>
-    <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
-    <script src="https://www.gstatic.com/firebasejs/7.12.0/firebase-app.js"></script>
+  </main>
+  <script src="https://www.gstatic.com/firebasejs/7.12.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/7.12.0/firebase-firestore.js"></script>
 
-    <!-- Add Firebase products that you want to use -->
-    <script src="https://www.gstatic.com/firebasejs/7.12.0/firebase-firestore.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: 'AIzaSyA5QAe5vJwNNZ6FvmgSJUo4hyYzxOB0ll8',
+      authDomain: 'tietgenroulette.firebaseapp.com',
+      databaseURL: 'https://tietgenroulette.firebaseio.com',
+      projectId: 'tietgenroulette',
+      storageBucket: 'tietgenroulette.appspot.com',
+      messagingSenderId: '494070460743',
+      appId: '1:494070460743:web:7deb5e0557690b0d321c62'
+    };
+    firebase.initializeApp(firebaseConfig);
+  </script>
+  <script src="index.js"></script>
+</body>
 
-    <script>
-      // Your web app's Firebase configuration
-      var firebaseConfig = {
-        apiKey: 'AIzaSyA5QAe5vJwNNZ6FvmgSJUo4hyYzxOB0ll8',
-        authDomain: 'tietgenroulette.firebaseapp.com',
-        databaseURL: 'https://tietgenroulette.firebaseio.com',
-        projectId: 'tietgenroulette',
-        storageBucket: 'tietgenroulette.appspot.com',
-        messagingSenderId: '494070460743',
-        appId: '1:494070460743:web:7deb5e0557690b0d321c62'
-      };
-      // Initialize Firebase
-      firebase.initializeApp(firebaseConfig);
-    </script>
-
-    <script>
-      var mediaStream = null;
-      openMediaStream();
-      var peer = new Peer({ key: 'lwjd5qra8257b9' });
-
-      firebase
-        .firestore()
-        .collection('activeUsers')
-        .onSnapshot(snapshot => {
-          let activeUsers = snapshot.docs.map(activeUser => activeUser.id);
-          console.log(activeUsers);
-          document.getElementById('active-users').innerHTML = activeUsers.join(
-            ', '
-          );
-        });
-
-      peer.on('open', function(id) {
-        console.log('My peer ID is: ' + id);
-        firebase
-          .firestore()
-          .collection('activeUsers')
-          .doc(id)
-          .set({
-            activated: new Date()
-          });
-
-        document.querySelector(
-          '#peer-id'
-        ).innerHTML = `Your peer id is: ${String(id)}`;
-      });
-
-      peer.on('connection', function(conn) {
-        console.log('Someone is reaching out');
-      });
-
-      peer.on('call', call => {
-        call.answer(mediaStream);
-
-        call.on('stream', stream => {
-          const video = document.querySelector('.video--match');
-          video.srcObject = stream;
-        });
-      });
-
-      function connectToPeer() {
-        var peerChoice = document.getElementById('peer-chooser').value;
-        console.log(peerChoice);
-        conn = peer.connect(peerChoice);
-      }
-
-      function callPeer() {
-        var peerChoice = document.getElementById('peer-chooser').value;
-
-        const mediaConnection = peer.call(peerChoice, mediaStream);
-        mediaConnection.on('stream', stream => {
-          const video = document.querySelector('.video--match');
-          video.srcObject = stream;
-        });
-      }
-
-      function openMediaStream() {
-        function hasGetUserMedia() {
-          return !!(
-            navigator.mediaDevices && navigator.mediaDevices.getUserMedia
-          );
-        }
-        if (hasGetUserMedia()) {
-          const constraints = {
-            video: true,
-            audio: true
-          };
-          const video = document.querySelector('.video--me');
-          navigator.mediaDevices.getUserMedia(constraints).then(stream => {
-            mediaStream = stream;
-            video.srcObject = stream;
-          });
-        }
-      }
-    </script>
-  </body>
 </html>
