@@ -84,7 +84,13 @@ function openMediaStream() {
   }
   if (hasGetUserMedia()) {
     const constraints = {
-      video: true,
+      video: {
+        mandatory: {
+          maxWidth: 640,
+          maxHeight: 360,
+        },
+        quality: 7,
+      },
       audio: true
     };
     const video = document.querySelector('.video--me');
