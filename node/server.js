@@ -12,7 +12,7 @@ const server = app.listen(9000);
 
 const peerServer = ExpressPeerServer(server, {
   debug: true,
-  path: '/myapp'
+  path: '/roulette'
 });
 
 app.use('/peerjs', peerServer);
