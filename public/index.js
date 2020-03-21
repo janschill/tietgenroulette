@@ -2,52 +2,45 @@ var mediaStream = null;
 openMediaStream();
 var peer = new Peer({ key: 'lwjd5qra8257b9' });
 
-var userStatusDatabaseRef = firebase.database().ref('/status/' + 'test');
+let activeUsers = [];
+let myId = null;
+let occupied = false;
 
-var isOfflineForDatabase = {
-  state: 'offline',
-  last_changed: firebase.database.ServerValue.TIMESTAMP
-};
+var activeUsersRef = firebase.database().ref('/status');
 
-var isOnlineForDatabase = {
-  state: 'online',
-  last_changed: firebase.database.ServerValue.TIMESTAMP
-};
+activeUsersRef.on('value', snapshot => {
+  const users = snapshot.val();
+  activeUsers = Object.keys(users)
+    .map(user => users[user])
+    .filter(user => user.id !== myId)
+    .filter(user => !user.occupied);
 
-firebase
-  .database()
-  .ref('.info/connected')
-  .on('value', function (snapshot) {
-    if (snapshot.val() == false) {
-      console.log('Not currently connected');
-      return;
-    }
+  if (myId && !occupied && activeUsers.length) {
+    connectToPeer(getRandomUser(activeUsers).id);
+  }
+});
 
-    userStatusDatabaseRef
-      .onDisconnect()
-      .set(isOfflineForDatabase)
-      .then(function () {
-        userStatusDatabaseRef.set(isOnlineForDatabase);
-      });
-  });
+peer.on('open', async id => {
+  myId = id;
+  var userStatusDatabaseRef = firebase.database().ref('/status/' + id);
 
-firebase
-  .firestore()
-  .collection('activeUsers')
-  .onSnapshot(snapshot => {
-    let activeUsers = snapshot.docs.map(activeUser => activeUser.id);
-    console.log(activeUsers);
-    document.getElementById('active-users').innerHTML = activeUsers.join(', ');
-  });
-
-peer.on('open', function (id) {
-  console.log('My peer ID is: ' + id);
   firebase
-    .firestore()
-    .collection('activeUsers')
-    .doc(id)
-    .set({
-      activated: new Date()
+    .database()
+    .ref('.info/connected')
+    .on('value', function(snapshot) {
+      if (snapshot.val() == false) {
+        return;
+      }
+
+      userStatusDatabaseRef
+        .onDisconnect()
+        .remove()
+        .then(function() {
+          userStatusDatabaseRef.set({
+            occupied: false,
+            id
+          });
+        });
     });
 
   document.querySelector('#peer-id').innerHTML = `Your peer id is: ${String(
@@ -55,12 +48,14 @@ peer.on('open', function (id) {
   )}`;
 });
 
-peer.on('connection', function (conn) {
-  console.log('Someone is reaching out');
-});
-
 peer.on('call', call => {
   call.answer(mediaStream);
+
+  var userStatusDatabaseRef = firebase.database().ref('/status/' + myId);
+  userStatusDatabaseRef.set({
+    id: myId,
+    occupied: true
+  });
 
   call.on('stream', stream => {
     const video = document.querySelector('.video--match');
@@ -68,10 +63,13 @@ peer.on('call', call => {
   });
 });
 
-function connectToPeer() {
-  var peerChoice = document.getElementById('peer-chooser').value;
-  console.log(peerChoice);
-  conn = peer.connect(peerChoice);
+function connectToPeer(peerId) {
+  conn = peer.connect(peerId);
+  var userStatusDatabaseRef = firebase.database().ref('/status/' + myId);
+  userStatusDatabaseRef.set({
+    id: myId,
+    occupied: true
+  });
 }
 
 function callPeer() {
@@ -83,6 +81,7 @@ function callPeer() {
     video.srcObject = stream;
   });
 }
+
 function openMediaStream() {
   function hasGetUserMedia() {
     return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
@@ -105,6 +104,16 @@ function openMediaStream() {
     });
   }
 }
+
 function findNext() {
-  console.log('find next user');
+  var userStatusDatabaseRef = firebase.database().ref('/status/' + myId);
+  userStatusDatabaseRef.set({
+    id: myId,
+    occupied: false
+  });
+}
+
+function getRandomUser(activeUsers) {
+  const activeUsersLength = activeUsers.length;
+  return activeUsers[Math.floor(Math.random() * activeUsersLength)];
 }
