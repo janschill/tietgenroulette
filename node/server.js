@@ -1,22 +1,48 @@
 const express = require('express');
-const { ExpressPeerServer } = require('peer');
 const app = express();
-app.use(express.static(__dirname + '/public'));
+const http = require('http').createServer(app);
+const path = require('path');
+const io = require('socket.io')(http);
+app.use(express.static('public'));
+const queue = [];
 
 app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/index.html');
-  console.log('Server running on port 9000');
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-const server = app.listen(9000);
+io.on('connection', socket => {
+  console.log('New user connected');
 
-const peerServer = ExpressPeerServer(server, {
-  debug: true,
-  path: '/peerjs'
+  if (queue.length <= 0) {
+    socket.emit('peer', { initiator: true });
+    console.log('Client told to become initiator');
+  } else {
+    socket.emit('peer', { initiator: false });
+    socket.emit('joinInitiator', queue.pop());
+    console.log(`Users in queue ${queue.length}`);
+  }
+
+  socket.on('initiatorData', data => {
+    const socketId = socket.id;
+    queue.push({ socketId: socketId, data });
+  });
+
+  socket.on('disconnect', () => {
+    console.log(`User with id ${socket.id} disconnected`);
+    removeUserFromQueue(socket);
+  });
+
+  socket.on('backToInitiator', data => {
+    const socketData = data;
+    io.to(socketData.socketId).emit('toInitiatorFromServer', data);
+  });
 });
 
-peerServer.on('connection', client => {
-  console.log('Connection detected');
-});
+http.listen(3000, () => console.log(`App listening on port ${3000}!`));
 
-app.use('/roulette', peerServer);
+function removeUserFromQueue(socket) {
+  const index = queue.indexOf(socket.id);
+  if (index > -1) {
+    queue.splice(index, 1);
+  }
+}

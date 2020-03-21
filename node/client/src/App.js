@@ -9,10 +9,11 @@ const App = () => {
   const [peerStream, setPeerStream] = useState(null);
 
   const socketConnection = stream => {
-    var socket = socketIOClient.connect('www.random.moe');
+    var socket = socketIOClient.connect('http://localhost:3000');
 
     socket.on('peer', data => {
-      createPeer(data.initiator, stream);
+      let localPeer = createPeer(data.initiator, stream);
+      console.log(localPeer);
 
       if (data.initiator) {
         peer.on('signal', data => {
@@ -75,10 +76,6 @@ const App = () => {
 
     peer.on('stream', data => {
       setPeerStream(data);
-
-      // Update the stream object
-      this.peerRef.srcObject = this.state.peerStream;
-      this.peerRef.onloaddedmetadata = this.peerRef.play();
     });
 
     setPeer(peer);
@@ -109,6 +106,7 @@ const App = () => {
     <div>
       <video className="video--me" autoPlay playsInline muted></video>
       <video className="video--match" autoPlay playsInline muted></video>
+      <button onClick={next}>NEXT!</button>
     </div>
   );
 };
