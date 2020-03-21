@@ -4,8 +4,7 @@ var peer = new Peer({ key: 'lwjd5qra8257b9' });
 
 let myId = null;
 let occupied = false;
-
-var activeUsersRef = firebase.database().ref('/status');
+let currentCallOrMediaConnection = null;
 
 peer.on('open', async id => {
   myId = id;
@@ -30,6 +29,8 @@ peer.on('open', async id => {
         });
     });
 
+  var activeUsersRef = firebase.database().ref('/status');
+
   activeUsersRef.on('value', snapshot => {
     const users = snapshot.val();
     const activeUsers = Object.keys(users)
@@ -38,9 +39,7 @@ peer.on('open', async id => {
       .filter(user => !user.occupied);
 
     if (myId && !occupied && activeUsers.length) {
-      occupied = true;
       connectToPeer(getRandomUser(activeUsers).id);
-      console.log(`Connecting`);
     }
   });
 
@@ -50,32 +49,41 @@ peer.on('open', async id => {
 });
 
 peer.on('call', call => {
-  call.answer(mediaStream);
+  if (!occupied) {
+    currentCallOrMediaConnection = call;
+    call.answer(mediaStream);
 
-  call.on('stream', stream => {
-    const video = document.querySelector('.video--match');
-    video.srcObject = stream;
-  });
+    call.on('stream', stream => {
+      const video = document.querySelector('.video--match');
+      video.srcObject = stream;
+    });
 
-  var userStatusDatabaseRef = firebase.database().ref('/status/' + myId);
-  userStatusDatabaseRef.set({
-    id: myId,
-    occupied: true
-  });
+    var userStatusDatabaseRef = firebase.database().ref('/status/' + myId);
+    userStatusDatabaseRef.set({
+      id: myId,
+      occupied: true
+    });
+  }
 });
 
 function connectToPeer(peerId) {
-  const mediaConnection = peer.call(peerId, mediaStream);
-  mediaConnection.on('stream', stream => {
-    const video = document.querySelector('.video--match');
-    video.srcObject = stream;
-  });
+  try {
+    currentCallOrMediaConnection = mediaConnection;
+    const mediaConnection = peer.call(peerId, mediaStream);
+    mediaConnection.on('stream', stream => {
+      const video = document.querySelector('.video--match');
+      video.srcObject = stream;
+    });
 
-  var userStatusDatabaseRef = firebase.database().ref('/status/' + myId);
-  userStatusDatabaseRef.set({
-    id: myId,
-    occupied: true
-  });
+    var userStatusDatabaseRef = firebase.database().ref('/status/' + myId);
+    userStatusDatabaseRef.set({
+      id: myId,
+      occupied: true
+    });
+    occupied = true;
+  } catch (error) {
+    console.log('Better luck next time.');
+  }
 }
 
 function openMediaStream() {
@@ -87,9 +95,9 @@ function openMediaStream() {
       video: {
         mandatory: {
           maxWidth: 640,
-          maxHeight: 360,
+          maxHeight: 360
         },
-        quality: 7,
+        quality: 7
       },
       audio: true
     };
@@ -102,11 +110,14 @@ function openMediaStream() {
 }
 
 function findNext() {
+  if (currentCallOrMediaConnection) currentCallOrMediaConnection.close();
+
   var userStatusDatabaseRef = firebase.database().ref('/status/' + myId);
   userStatusDatabaseRef.set({
     id: myId,
     occupied: false
   });
+
   occupied = false;
 }
 
