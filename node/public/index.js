@@ -1,17 +1,16 @@
-let mediaStream = null;
-openMediaStream();
-const peer = new Peer({
-  host: 'localhost',
-  port: 9000,
-  path: '/roulette'
-});
+const socket = io();
 
-let myId = null;
-let currentCallOrMediaConnection = null;
+// openMediaStream();
+// const peer = new Peer({
+//   host: 'localhost',
+//   port: 9000,
+//   path: '/myapp'
+// });
 
-peer.on('open', async id => {
-  myId = id;
-});
+// console.log(peer);
+
+// peer.on('open', async id => {
+// });
 
 // peer.on('call', call => {
 //   currentCallOrMediaConnection = call;
