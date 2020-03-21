@@ -19,10 +19,10 @@ const socketConnection = stream => {
     peer.signal(data.data);
 
     if (!data.initiator) {
-      let initiaitorSocketId = data.socketid;
+      let initiaitorSocketId = data.socketId;
       peer.on('signal', data => {
         socket.emit('backToInitiator', {
-          socketid: initiaitorSocketId,
+          socketId: initiaitorSocketId,
           data: data
         });
       });
