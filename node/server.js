@@ -12,7 +12,11 @@ const server = app.listen(9000);
 
 const peerServer = ExpressPeerServer(server, {
   debug: true,
-  path: '/roulette'
+  path: '/peerjs'
 });
 
-app.use('/peerjs', peerServer);
+peerServer.on('connection', client => {
+  console.log('Connection detected');
+});
+
+app.use('/roulette', peerServer);
