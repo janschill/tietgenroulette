@@ -3,7 +3,8 @@ let peer = null;
 let peerStream = null;
 
 const socketConnection = stream => {
-  var socket = io('https://www.tietgenroulette.com');
+  const socket = io('localhost:3000');
+  // const socket = io('https://www.tietgenroulette.com');
 
   socket.on('peer', data => {
     createPeer(data.initiator, stream);
@@ -42,14 +43,25 @@ const next = () => {
     peerStream = null;
   }
 
-  navigator.mediaDevices
-    .getUserMedia({ video: true, audio: true })
-    .then(stream => {
-      socketConnection(stream);
-    })
-    .catch(err => {
-      socketConnection(false);
-    });
+  if (clientStream) {
+    socketConnection(clientStream);
+  } else {
+    navigator.mediaDevices
+      .getUserMedia({
+        video: {
+          mandatory: {
+            maxWidth: 640,
+            maxHeight: 360
+          },
+        }, audio: true
+      })
+      .then(stream => {
+        socketConnection(stream);
+      })
+      .catch(err => {
+        socketConnection(false);
+      });
+  }
 };
 
 const createPeer = (initiator, stream) => {
@@ -87,6 +99,7 @@ navigator.mediaDevices
     }, audio: true
   })
   .then(stream => {
+    clientStream = stream;
     const video = document.querySelector('.video--me');
     video.srcObject = stream;
   });
