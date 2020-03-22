@@ -3,7 +3,7 @@ let peer = null;
 let peerStream = null;
 
 const socketConnection = stream => {
-  var socket = io('http://localhost:3000');
+  var socket = io('https://www.tietgenroulette.com');
 
   socket.on('peer', data => {
     createPeer(data.initiator, stream);
