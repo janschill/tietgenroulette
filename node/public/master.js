@@ -59,9 +59,9 @@ const createPeer = (initiator, stream) => {
     stream: stream
   });
 
-  newPeer.on('error', err => {});
+  newPeer.on('error', err => { });
 
-  newPeer.on('connect', () => {});
+  newPeer.on('connect', () => { });
 
   newPeer.on('data', async data => {
     data = JSON.parse(data);
@@ -77,7 +77,15 @@ const createPeer = (initiator, stream) => {
 };
 
 navigator.mediaDevices
-  .getUserMedia({ video: true, audio: true })
+  .getUserMedia({
+    video: {
+      mandatory: {
+        maxWidth: 640,
+        maxHeight: 360
+      },
+      quality: 7
+    }, audio: true
+  })
   .then(stream => {
     const video = document.querySelector('.video--me');
     video.srcObject = stream;
