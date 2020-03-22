@@ -1,5 +1,7 @@
 # Tietgenroulette
 
+Video chat for those desperate lonely isolation times.
+
 ## Getting started
 
 1. Clone this repository
